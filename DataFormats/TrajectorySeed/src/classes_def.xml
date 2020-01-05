@@ -20,5 +20,8 @@
   <class name="edm::Ptr<TrajectorySeed>"/>
   <class name="edm::reftobase::RefHolder<edm::Ptr<TrajectorySeed> >"/>
   <class name="edm::reftobase::Holder<TrajectorySeed,edm::Ref<std::vector<TrajectorySeed>,TrajectorySeed,edm::refhelper::FindUsingAdvance<std::vector<TrajectorySeed>,TrajectorySeed> > >"/>
-
+  
+ <class name="SeedCandidate"/>
+ <class name="std::vector<SeedCandidate>"/>
+ <class name="edm::Wrapper<std::vector<SeedCandidate> >"/>
 </lcgdict>

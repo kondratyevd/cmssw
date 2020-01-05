@@ -26,11 +26,13 @@ namespace cms
   class dso_internal CkfTrackCandidateMaker : public edm::stream::EDProducer<>, public CkfTrackCandidateMakerBase
   {
   public:
-
+    typedef std::vector<Trajectory> TrajectoryCollection;
     explicit CkfTrackCandidateMaker(const edm::ParameterSet& conf):
       CkfTrackCandidateMakerBase(conf, consumesCollector()){
       produces<TrackCandidateCollection>();
       produces<std::vector<SeedStopInfo> >();
+      theTrajectoryOutput = true;
+      produces<TrajectoryCollection>();
     }
 
     ~CkfTrackCandidateMaker() override{;}

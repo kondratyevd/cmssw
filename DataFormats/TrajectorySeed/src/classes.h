@@ -9,6 +9,8 @@
 #include "DataFormats/Common/interface/Ptr.h"
 #include "DataFormats/Common/interface/RefHolder.h"
 
+#include "DataFormats/TrajectorySeed/interface/SeedCandidate.h"
+
 namespace DataFormats_TrajectorySeed {
   struct dictionary {
     std::vector<TrajectorySeed> v1;

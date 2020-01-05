@@ -30,6 +30,7 @@
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateOnSurface.h"
 #include "TrackingTools/GeomPropagators/interface/StateOnTrackerBound.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
+#include "DataFormats/TrajectorySeed/interface/SeedCandidate.h"
 
 class TSGForOIFromL2 : public edm::global::EDProducer<> {
  
@@ -112,7 +113,7 @@ class TSGForOIFromL2 : public edm::global::EDProducer<> {
         double errorSF,
         unsigned int& hitlessSeedsMade,
         unsigned int& numSeedsMade,
-        std::vector<TrajectorySeed>& out) const;
+        std::vector<TrajectorySeed>& out, std::vector<SeedCandidate>& outSeedCands, reco::TrackRef l2, const std::string layerId, int layerNum) const;
 
     /// Find hits on a given layer (TOB or TEC) and create seeds from updated TSOS with hit
     void makeSeedsFromHits(
@@ -125,7 +126,7 @@ class TSGForOIFromL2 : public edm::global::EDProducer<> {
         unsigned int& hitSeedsMade,
         unsigned int& numSeedsMade,
         unsigned int& layerCount,
-        std::vector<TrajectorySeed>& out) const;
+        std::vector<TrajectorySeed>& out, std::vector<SeedCandidate>& outSeedCands, reco::TrackRef l2, const std::string layerId, int layerNum) const;
     
     /// Calculate the dynamic error SF by analysing the L2
     double calculateSFFromL2(const reco::TrackRef track) const;

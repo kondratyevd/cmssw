@@ -292,9 +292,10 @@ GroupedCkfTrajectoryBuilder::buildTrajectories (const TrajectorySeed& seed,
   analyseResult(result);
 
   LogDebug("CkfPattern")<< "GroupedCkfTrajectoryBuilder: returning result of size " << result.size();
+  //  std::cout << "Trajectory: returning result of size " << result.size() << std::endl;
   statCount.traj(result.size());
 
-#ifdef VI_DEBUG
+  #ifdef VI_DEBUG
   int kt=0;
   for (auto const & traj : result) {
 int chit[7]={};
@@ -321,7 +322,7 @@ for (auto const & tm : traj.measurements()) {
 
 std::cout << "ckf " << kt++ << ": "; for (auto c:chit) std::cout << c <<'/'; std::cout<< std::endl;
 }
-#endif
+  #endif
 
   return startingTraj;
 
