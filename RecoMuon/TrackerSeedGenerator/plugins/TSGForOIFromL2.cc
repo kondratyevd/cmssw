@@ -181,15 +181,15 @@ void TSGForOIFromL2::produce(edm::StreamID sid, edm::Event& iEvent, const edm::E
       for (auto it=tob.rbegin(); it!=tob.rend(); ++it) { 
         LogTrace("TSGForOIFromL2") << "TSGForOIFromL2::produce: looping in TOB layer " << layerCount << std::endl;
         if ( useHitLessSeeds_ && hitlessSeedsMadeIP < maxHitlessSeeds_ && numSeedsMade < maxSeeds_ ) 
-	  makeSeedsWithoutHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, errorSFHitless, hitlessSeedsMadeIP, numSeedsMade, out, outSeedCands, l2, "tob", layerNum);
+	  makeSeedsWithoutHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, errorSFHitless, hitlessSeedsMadeIP, numSeedsMade, out, outSeedCands, l2TrackColIndex, l2, "tob", layerNum);
 
         // Do not create hitbased seeds in barrel region
         if (absL2muonEta > 1.0 && hitSeedsMade < maxHitSeeds_ && numSeedsMade < maxSeeds_ ) 
-	  makeSeedsFromHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, measurementTrackerH, errorSFHits, hitSeedsMade, numSeedsMade, layerCount, out, outSeedCands, l2, "tob", layerNum);
+	  makeSeedsFromHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, measurementTrackerH, errorSFHits, hitSeedsMade, numSeedsMade, layerCount, out, outSeedCands, l2TrackColIndex, l2, "tob", layerNum);
 
         if (useBoth) {
           if ( useHitLessSeeds_ && hitlessSeedsMadeMuS < maxHitlessSeeds_ && numSeedsMade < maxSeeds_ ) 
-	    makeSeedsWithoutHits(**it, outerTkStateOutside, *(propagatorOpposite.get()), estimatorH, errorSFHitless, hitlessSeedsMadeMuS, numSeedsMade, out, outSeedCands, l2, "tob", layerNum);
+	    makeSeedsWithoutHits(**it, outerTkStateOutside, *(propagatorOpposite.get()), estimatorH, errorSFHitless, hitlessSeedsMadeMuS, numSeedsMade, out, outSeedCands,l2TrackColIndex, l2, "tob", layerNum);
         }
 	layerNum++;
       }
@@ -211,14 +211,14 @@ void TSGForOIFromL2::produce(edm::StreamID sid, edm::Event& iEvent, const edm::E
       for (auto it=tecPositive.rbegin(); it!=tecPositive.rend(); ++it) {
         LogTrace("TSGForOIFromL2") << "TSGForOIFromL2::produce: looping in TEC+ layer " << layerCount << std::endl;
         if ( useHitLessSeeds_ && hitlessSeedsMadeIP < maxHitlessSeeds_ && numSeedsMade < maxSeeds_ ) 
-	  makeSeedsWithoutHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, errorSFHitless, hitlessSeedsMadeIP, numSeedsMade, out, outSeedCands, l2, "tec+", layerNum);
+	  makeSeedsWithoutHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, errorSFHitless, hitlessSeedsMadeIP, numSeedsMade, out, outSeedCands, l2TrackColIndex,l2, "tec+", layerNum);
 
         if (absL2muonEta > 1.0 && hitSeedsMade < maxHitSeeds_ && numSeedsMade < maxSeeds_ ) 
-	  makeSeedsFromHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, measurementTrackerH, errorSFHits, hitSeedsMade, numSeedsMade, layerCount, out, outSeedCands, l2, "tec+", layerNum);
+	  makeSeedsFromHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, measurementTrackerH, errorSFHits, hitSeedsMade, numSeedsMade, layerCount, out, outSeedCands, l2TrackColIndex, l2, "tec+", layerNum);
 
         if (useBoth) {
           if ( useHitLessSeeds_ && hitlessSeedsMadeMuS < maxHitlessSeeds_ && numSeedsMade < maxSeeds_ ) 
-	    makeSeedsWithoutHits(**it, outerTkStateOutside, *(propagatorOpposite.get()), estimatorH, errorSFHitless, hitlessSeedsMadeMuS, numSeedsMade, out, outSeedCands, l2, "tec+", layerNum);
+	    makeSeedsWithoutHits(**it, outerTkStateOutside, *(propagatorOpposite.get()), estimatorH, errorSFHitless, hitlessSeedsMadeMuS, numSeedsMade, out, outSeedCands, l2TrackColIndex, l2, "tec+", layerNum);
         } 
 	layerNum++;
       }
@@ -232,14 +232,14 @@ void TSGForOIFromL2::produce(edm::StreamID sid, edm::Event& iEvent, const edm::E
       for (auto it=tecNegative.rbegin(); it!=tecNegative.rend(); ++it) {
         LogTrace("TSGForOIFromL2") << "TSGForOIFromL2::produce: looping in TEC- layer " << layerCount << std::endl;
         if ( useHitLessSeeds_ && hitlessSeedsMadeIP < maxHitlessSeeds_ && numSeedsMade < maxSeeds_ ) 
-	  makeSeedsWithoutHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, errorSFHitless, hitlessSeedsMadeIP, numSeedsMade, out, outSeedCands, l2, "tec-", layerNum);
+	  makeSeedsWithoutHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, errorSFHitless, hitlessSeedsMadeIP, numSeedsMade, out, outSeedCands, l2TrackColIndex, l2, "tec-", layerNum);
 
         if (absL2muonEta > 1.0 && hitSeedsMade < maxHitSeeds_ && numSeedsMade < maxSeeds_ ) 
-	  makeSeedsFromHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, measurementTrackerH, errorSFHits, hitSeedsMade, numSeedsMade, layerCount, out, outSeedCands, l2, "tec-", layerNum);
+	  makeSeedsFromHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, measurementTrackerH, errorSFHits, hitSeedsMade, numSeedsMade, layerCount, out, outSeedCands, l2TrackColIndex, l2, "tec-", layerNum);
 
         if (useBoth) {
           if ( useHitLessSeeds_ && hitlessSeedsMadeMuS < maxHitlessSeeds_ && numSeedsMade < maxSeeds_ ) 
-	    makeSeedsWithoutHits(**it, outerTkStateOutside, *(propagatorOpposite.get()), estimatorH, errorSFHitless, hitlessSeedsMadeMuS, numSeedsMade, out, outSeedCands, l2, "tec-", layerNum);
+	    makeSeedsWithoutHits(**it, outerTkStateOutside, *(propagatorOpposite.get()), estimatorH, errorSFHitless, hitlessSeedsMadeMuS, numSeedsMade, out, outSeedCands, l2TrackColIndex, l2, "tec-", layerNum);
         }
 	layerNum++;
       }
@@ -275,7 +275,7 @@ void TSGForOIFromL2::makeSeedsWithoutHits(
                                 double errorSF,
                                 unsigned int& hitlessSeedsMade,
                                 unsigned int& numSeedsMade,
-                                std::vector<TrajectorySeed>& out, std::vector<SeedCandidate>& outSeedCands, reco::TrackRef l2, 
+                                std::vector<TrajectorySeed>& out, std::vector<SeedCandidate>& outSeedCands, unsigned int& l2TrackColIndex, reco::TrackRef l2, 
 				const std::string layerId, int layerNum) const {
     
   // create hitless seeds
@@ -294,7 +294,7 @@ void TSGForOIFromL2::makeSeedsWithoutHits(
       PTrajectoryStateOnDet const& ptsod = trajectoryStateTransform::persistentState(tsosOnLayer,detOnLayer->geographicalId().rawId());
       TrajectorySeed::recHitContainer rHC;
       out.push_back(TrajectorySeed(ptsod,rHC,oppositeToMomentum));
-      outSeedCands.push_back(SeedCandidate(*l2, layerId, layerNum, "hitless"));
+      outSeedCands.push_back(SeedCandidate(l2TrackColIndex, *l2, layerId, layerNum, "hitless"));
       LogTrace("TSGForOIFromL2") << "TSGForOIFromL2::makeSeedsWithoutHits: TSOS (Hitless) done " << std::endl;
       hitlessSeedsMade++;
       numSeedsMade++;
@@ -317,7 +317,7 @@ void TSGForOIFromL2::makeSeedsFromHits(
                 unsigned int& hitSeedsMade,
                 unsigned int& numSeedsMade,
                 unsigned int& layerCount,
-                std::vector<TrajectorySeed>& out, std::vector<SeedCandidate>& outSeedCands, reco::TrackRef l2,
+                std::vector<TrajectorySeed>& out, std::vector<SeedCandidate>& outSeedCands, unsigned int& l2TrackColIndex, reco::TrackRef l2,
 		const std::string layerId, int layerNum) const {
 
   if (layerCount > numOfLayersToTry_) return;
@@ -359,7 +359,7 @@ void TSGForOIFromL2::makeSeedsFromHits(
     TrajectorySeed seed(pstate, std::move(seedHits), oppositeToMomentum);
     LogTrace("TSGForOIFromL2") << "TSGForOIFromL2::makeSeedsFromHits: Number of seedHits: " << seedHits.size() << std::endl;
     out.push_back(seed);
-    outSeedCands.push_back(SeedCandidate(*l2, layerId, layerNum, "hitbased"));
+    outSeedCands.push_back(SeedCandidate(l2TrackColIndex, *l2, layerId, layerNum, "hitbased"));
     found++;
     numSeedsMade++;
     hitSeedsMade++;
