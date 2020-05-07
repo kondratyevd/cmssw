@@ -294,7 +294,7 @@ void TSGForOIFromL2::makeSeedsWithoutHits(
       PTrajectoryStateOnDet const& ptsod = trajectoryStateTransform::persistentState(tsosOnLayer,detOnLayer->geographicalId().rawId());
       TrajectorySeed::recHitContainer rHC;
       out.push_back(TrajectorySeed(ptsod,rHC,oppositeToMomentum));
-      outSeedCands.push_back(SeedCandidate(l2TrackColIndex, *l2, layerId, layerNum, "hitless"));
+      outSeedCands.push_back(SeedCandidate(l2TrackColIndex, *l2, layerId, layerNum, 0));
       LogTrace("TSGForOIFromL2") << "TSGForOIFromL2::makeSeedsWithoutHits: TSOS (Hitless) done " << std::endl;
       hitlessSeedsMade++;
       numSeedsMade++;
@@ -359,7 +359,7 @@ void TSGForOIFromL2::makeSeedsFromHits(
     TrajectorySeed seed(pstate, std::move(seedHits), oppositeToMomentum);
     LogTrace("TSGForOIFromL2") << "TSGForOIFromL2::makeSeedsFromHits: Number of seedHits: " << seedHits.size() << std::endl;
     out.push_back(seed);
-    outSeedCands.push_back(SeedCandidate(l2TrackColIndex, *l2, layerId, layerNum, "hitbased"));
+    outSeedCands.push_back(SeedCandidate(l2TrackColIndex, *l2, layerId, layerNum, 1));
     found++;
     numSeedsMade++;
     hitSeedsMade++;
