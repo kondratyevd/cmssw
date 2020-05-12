@@ -183,8 +183,7 @@ void TSGForOIFromL2::produce(edm::StreamID sid, edm::Event& iEvent, const edm::E
         if ( useHitLessSeeds_ && hitlessSeedsMadeIP < maxHitlessSeeds_ && numSeedsMade < maxSeeds_ ) 
 	  makeSeedsWithoutHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, errorSFHitless, hitlessSeedsMadeIP, numSeedsMade, out, outSeedCands, l2TrackColIndex, l2, "tob", layerNum);
 
-        // Do not create hitbased seeds in barrel region
-        if (absL2muonEta > 1.0 && hitSeedsMade < maxHitSeeds_ && numSeedsMade < maxSeeds_ ) 
+        if (hitSeedsMade < maxHitSeeds_ && numSeedsMade < maxSeeds_ ) 
 	  makeSeedsFromHits(**it, tsosAtIP, *(propagatorAlong.get()), estimatorH, measurementTrackerH, errorSFHits, hitSeedsMade, numSeedsMade, layerCount, out, outSeedCands, l2TrackColIndex, l2, "tob", layerNum);
 
         if (useBoth) {
