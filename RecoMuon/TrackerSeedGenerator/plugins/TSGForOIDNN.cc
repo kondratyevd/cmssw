@@ -195,9 +195,6 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
 
             // Put variables needed for DNN into an std::map
             std::map<std::string, float> feature_map_ = getFeatureMap(l2, tsosAtIP, outerTkStateOutside);
-            //for (auto const &pair: feature_map_) {
-            //    std::cout << pair.first << " = " << pair.second << srd::endl;
-            //}
 
             if (std::abs(l2->eta())<etaSplitForDnn_){
                 // barrel
@@ -207,12 +204,11 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
                 std::tie(nHBd, nHLIP, nHLMuS, dnnSuccess_) =  evaluateDnn(feature_map_, tf_session_endcap_, metadata.get_child("endcap") );
             }
             if (!dnnSuccess_) break;
-            //std::cout << "DNN decision: " << nHBd << " " << nHLIP << " " << nHLMuS << std::endl;
+
             maxHitSeeds__ = 0;
             maxHitDoubletSeeds__ = nHBd;
             maxHitlessSeedsIP__ = nHLIP;
             maxHitlessSeedsMuS__ = nHLMuS;
-
         }
 
         numSeedsMade = 0;
@@ -823,7 +819,7 @@ std::tuple<int, int, int, bool> TSGForOIDNN::evaluateDnn(
     int nHB, nHLIP,nHLMuS, n_features = 0;
     bool dnnSuccess = false;
     n_features = metadata.get<int>("n_features", 0);
-    //std::cout<<"Number of features is "<<n_features<<std::endl;
+
     // Prepare tensor for DNN inputs
     tensorflow::Tensor input(tensorflow::DT_FLOAT, { 1, n_features });
     std::string fname;
@@ -836,9 +832,7 @@ std::tuple<int, int, int, bool> TSGForOIDNN::evaluateDnn(
         }
         else {
             input.matrix<float>()(0, i_feature) = float(feature_map.at(fname));
-            //std::cout << "Input #" << i_feature << ": " << fname << " = " << feature_map.at(fname) << std::endl;
             i_feature++;
-
         }
     }
 
@@ -858,7 +852,6 @@ std::tuple<int, int, int, bool> TSGForOIDNN::evaluateDnn(
     float out_max = 0;
     for (long long int i = 0; i < out_tensor.dim_size(1); i++) {
         float ith_output = dnn_outputs(0, i);
-        //std::cout << outputLayer << "#" <<  i << " = " << ith_output << std::endl;
         if (ith_output > out_max){
             imax = i;
             out_max = ith_output;
@@ -870,7 +863,6 @@ std::tuple<int, int, int, bool> TSGForOIDNN::evaluateDnn(
     nHLIP = metadata.get<int>("output_labels.label_"+std::to_string(imax+1)+".nHLIP");
     nHLMuS = metadata.get<int>("output_labels.label_"+std::to_string(imax+1)+".nHLMuS");
 
-    //std::cout << "DNN output #"<< imax << ": " << nHB << " " << nHLIP << " " << nHLMuS << std::endl;
     dnnSuccess = true;
     return std::make_tuple(nHB, nHLIP, nHLMuS, dnnSuccess);
 }

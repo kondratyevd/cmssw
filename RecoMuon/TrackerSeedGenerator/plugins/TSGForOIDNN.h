@@ -125,7 +125,7 @@ class TSGForOIDNN : public edm::global::EDProducer<> {
 
     tensorflow::GraphDef* graphDef_endcap_;
     tensorflow::Session* tf_session_endcap_;
-    //  pt::ptree metadata;
+
     /// Create seeds without hits on a given layer (TOB or TEC)
     void makeSeedsWithoutHits(const GeometricSearchDet& layer,
                               const TrajectoryStateOnSurface& tsos,
