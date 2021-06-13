@@ -18,16 +18,11 @@ TSGForOIDNN::TSGForOIDNN(const edm::ParameterSet& iConfig)
       maxHitlessSeeds_(iConfig.getParameter<uint32_t>("maxHitlessSeeds")),
       numOfLayersToTry_(iConfig.getParameter<int32_t>("layersToTry")),
       numOfHitsToTry_(iConfig.getParameter<int32_t>("hitsToTry")),
-      numL2ValidHitsCutAllEta_(iConfig.getParameter<uint32_t>("numL2ValidHitsCutAllEta")),
-      numL2ValidHitsCutAllEndcap_(iConfig.getParameter<uint32_t>("numL2ValidHitsCutAllEndcap")),
-      fixedErrorRescalingForHits_(iConfig.getParameter<double>("fixedErrorRescaleFactorForHits")),
       fixedErrorRescalingForHitless_(iConfig.getParameter<double>("fixedErrorRescaleFactorForHitless")),
-      adjustErrorsDynamicallyForHits_(iConfig.getParameter<bool>("adjustErrorsDynamicallyForHits")),
       adjustErrorsDynamicallyForHitless_(iConfig.getParameter<bool>("adjustErrorsDynamicallyForHitless")),
       estimatorName_(iConfig.getParameter<std::string>("estimator")),
       minEtaForTEC_(iConfig.getParameter<double>("minEtaForTEC")),
       maxEtaForTOB_(iConfig.getParameter<double>("maxEtaForTOB")),
-      useHitLessSeeds_(iConfig.getParameter<bool>("UseHitLessSeeds")),
       updator_(new KFUpdator()),
       measurementTrackerTag_(
           consumes<MeasurementTrackerEvent>(iConfig.getParameter<edm::InputTag>("MeasurementTrackerEvent"))),
@@ -47,8 +42,6 @@ TSGForOIDNN::TSGForOIDNN(const edm::ParameterSet& iConfig)
       SF4_(iConfig.getParameter<double>("SF4")),
       SF5_(iConfig.getParameter<double>("SF5")),
       SF6_(iConfig.getParameter<double>("SF6")),
-      tsosDiff1_(iConfig.getParameter<double>("tsosDiff1")),
-      tsosDiff2_(iConfig.getParameter<double>("tsosDiff2")),
       propagatorName_(iConfig.getParameter<std::string>("propagatorName")),
       theCategory_(std::string("Muon|RecoMuon|TSGForOIDNN")),
       maxHitlessSeedsIP_(iConfig.getParameter<uint32_t>("maxHitlessSeedsIP")),
@@ -218,7 +211,6 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
         hitDoubletSeedsMade = 0;
 
         // calculate scale factors
-        double errorSFHits = (adjustErrorsDynamicallyForHits_ ? calculateSFFromL2(l2) : fixedErrorRescalingForHits_);
         double errorSFHitless =
             (adjustErrorsDynamicallyForHitless_ ? calculateSFFromL2(l2) : fixedErrorRescalingForHitless_);
 
@@ -228,7 +220,7 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
             for (auto it = tob.rbegin(); it != tob.rend(); ++it) {
                 LogTrace("TSGForOIDNN") << "TSGForOIDNN::produce: looping in TOB layer " << layerCount << std::endl;
 
-                if (useHitLessSeeds_ && hitlessSeedsMadeIP < maxHitlessSeedsIP__ && numSeedsMade < maxSeeds_)
+                if (hitlessSeedsMadeIP < maxHitlessSeedsIP__ && numSeedsMade < maxSeeds_)
                     makeSeedsWithoutHits(**it,
                                          tsosAtIP,
                                          *(propagatorAlong.get()),
@@ -239,7 +231,7 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
                                          out);
 
                 if (outerTkStateInside.isValid() && outerTkStateOutside.isValid() &&
-                    useHitLessSeeds_ && hitlessSeedsMadeMuS < maxHitlessSeedsMuS__ && numSeedsMade < maxSeeds_)
+                    hitlessSeedsMadeMuS < maxHitlessSeedsMuS__ && numSeedsMade < maxSeeds_)
                     makeSeedsWithoutHits(**it,
                                          outerTkStateOutside,
                                          *(propagatorOpposite.get()),
@@ -255,7 +247,6 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
                                       *(propagatorAlong.get()),
                                       estimatorH,
                                       measurementTrackerH,
-                                      errorSFHits,
                                       hitSeedsMade,
                                       numSeedsMade,
                                       layerCount,
@@ -268,7 +259,6 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
                                              estimatorH,
                                              measurementTrackerH,
                                              navSchool,
-                                             errorSFHits,
                                              hitDoubletSeedsMade,
                                              numSeedsMade,
                                              layerCount,
@@ -294,7 +284,7 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
             for (auto it = tecPositive.rbegin(); it != tecPositive.rend(); ++it) {
                 LogTrace("TSGForOIDNN") << "TSGForOIDNN::produce: looping in TEC+ layer " << layerCount << std::endl;
 
-                if (useHitLessSeeds_ && hitlessSeedsMadeIP < maxHitlessSeedsIP__ && numSeedsMade < maxSeeds_)
+                if (hitlessSeedsMadeIP < maxHitlessSeedsIP__ && numSeedsMade < maxSeeds_)
                     makeSeedsWithoutHits(**it,
                                          tsosAtIP,
                                          *(propagatorAlong.get()),
@@ -305,7 +295,7 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
                                          out);
 
                 if (outerTkStateInside.isValid() && outerTkStateOutside.isValid() &&
-                    useHitLessSeeds_ && hitlessSeedsMadeMuS < maxHitlessSeedsMuS__ && numSeedsMade < maxSeeds_)
+                    hitlessSeedsMadeMuS < maxHitlessSeedsMuS__ && numSeedsMade < maxSeeds_)
                     makeSeedsWithoutHits(**it,
                                          outerTkStateOutside,
                                          *(propagatorOpposite.get()),
@@ -321,7 +311,6 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
                                       *(propagatorAlong.get()),
                                       estimatorH,
                                       measurementTrackerH,
-                                      errorSFHits,
                                       hitSeedsMade,
                                       numSeedsMade,
                                       layerCount,
@@ -334,7 +323,6 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
                                              estimatorH,
                                              measurementTrackerH,
                                              navSchool,
-                                             errorSFHits,
                                              hitDoubletSeedsMade,
                                              numSeedsMade,
                                              layerCount,
@@ -351,7 +339,7 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
             for (auto it = tecNegative.rbegin(); it != tecNegative.rend(); ++it) {
                 LogTrace("TSGForOIDNN") << "TSGForOIDNN::produce: looping in TEC- layer " << layerCount << std::endl;
 
-                if (useHitLessSeeds_ && hitlessSeedsMadeIP < maxHitlessSeedsIP__ && numSeedsMade < maxSeeds_)
+                if (hitlessSeedsMadeIP < maxHitlessSeedsIP__ && numSeedsMade < maxSeeds_)
                     makeSeedsWithoutHits(**it,
                                          tsosAtIP,
                                          *(propagatorAlong.get()),
@@ -362,7 +350,7 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
                                          out);
 
                 if (outerTkStateInside.isValid() && outerTkStateOutside.isValid() &&
-                    useHitLessSeeds_ && hitlessSeedsMadeMuS < maxHitlessSeedsMuS__ && numSeedsMade < maxSeeds_)
+                    hitlessSeedsMadeMuS < maxHitlessSeedsMuS__ && numSeedsMade < maxSeeds_)
                     makeSeedsWithoutHits(**it,
                                          outerTkStateOutside,
                                          *(propagatorOpposite.get()),
@@ -378,7 +366,6 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
                                       *(propagatorAlong.get()),
                                       estimatorH,
                                       measurementTrackerH,
-                                      errorSFHits,
                                       hitSeedsMade,
                                       numSeedsMade,
                                       layerCount,
@@ -391,7 +378,6 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
                                              estimatorH,
                                              measurementTrackerH,
                                              navSchool,
-                                             errorSFHits,
                                              hitDoubletSeedsMade,
                                              numSeedsMade,
                                              layerCount,
@@ -455,7 +441,6 @@ void TSGForOIDNN::makeSeedsFromHits(const GeometricSearchDet& layer,
                                        const Propagator& propagatorAlong,
                                        edm::ESHandle<Chi2MeasurementEstimatorBase>& estimator,
                                        edm::Handle<MeasurementTrackerEvent>& measurementTracker,
-                                       double errorSF,
                                        unsigned int& hitSeedsMade,
                                        unsigned int& numSeedsMade,
                                        unsigned int& layerCount,
@@ -463,9 +448,7 @@ void TSGForOIDNN::makeSeedsFromHits(const GeometricSearchDet& layer,
     if (layerCount > numOfLayersToTry_)
         return;
 
-    // Error Rescaling
     TrajectoryStateOnSurface onLayer(tsos);
-    onLayer.rescaleError(errorSF);
 
     std::vector<GeometricSearchDet::DetWithState> dets;
     layer.compatibleDetsV(onLayer, propagatorAlong, *estimator, dets);
@@ -532,7 +515,6 @@ void TSGForOIDNN::makeSeedsFromHitDoublets(const GeometricSearchDet& layer,
                                               edm::ESHandle<Chi2MeasurementEstimatorBase>& estimator,
                                               edm::Handle<MeasurementTrackerEvent>& measurementTracker,
                                               edm::ESHandle<NavigationSchool> navSchool,
-                                              double errorSF,
                                               unsigned int& hitDoubletSeedsMade,
                                               unsigned int& numSeedsMade,
                                               unsigned int& layerCount,
@@ -549,9 +531,7 @@ void TSGForOIDNN::makeSeedsFromHitDoublets(const GeometricSearchDet& layer,
 
     // // // First, regular procedure to find a compatible hit - like in makeSeedsFromHits // // //
 
-    // Error Rescaling
     TrajectoryStateOnSurface onLayer(tsos);
-    onLayer.rescaleError(errorSF);
 
     // Find dets compatible with original TSOS
     std::vector< GeometricSearchDet::DetWithState > dets;
@@ -623,7 +603,7 @@ void TSGForOIDNN::makeSeedsFromHitDoublets(const GeometricSearchDet& layer,
             // find dets compatible with updated TSOS
             std::vector< GeometricSearchDet::DetWithState > dets_next;
             TrajectoryStateOnSurface onLayer_next(updatedTSOS);
-            onLayer_next.rescaleError(errorSF);//errorSF
+
             compLayer->compatibleDetsV(onLayer_next, propagatorAlong, *estimator, dets_next);
 
             //if (!detWithState.size()) continue;
@@ -877,20 +857,15 @@ void TSGForOIDNN::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
   desc.add<int>("layersToTry", 2);
   desc.add<double>("fixedErrorRescaleFactorForHitless", 2.0);
   desc.add<int>("hitsToTry", 1);
-  desc.add<bool>("adjustErrorsDynamicallyForHits", false);
   desc.add<bool>("adjustErrorsDynamicallyForHitless", true);
   desc.add<edm::InputTag>("MeasurementTrackerEvent", edm::InputTag("hltSiStripClusters"));
-  desc.add<bool>("UseHitLessSeeds", true);
   desc.add<std::string>("estimator", "hltESPChi2MeasurementEstimator100");
   desc.add<double>("maxEtaForTOB", 1.8);
   desc.add<double>("minEtaForTEC", 0.7);
   desc.addUntracked<bool>("debug", false);
-  desc.add<double>("fixedErrorRescaleFactorForHits", 1.0);
   desc.add<unsigned int>("maxSeeds", 20);
   desc.add<unsigned int>("maxHitlessSeeds", 5);  
   desc.add<unsigned int>("maxHitSeeds", 1);
-  desc.add<unsigned int>("numL2ValidHitsCutAllEta", 20);
-  desc.add<unsigned int>("numL2ValidHitsCutAllEndcap", 30);
   desc.add<double>("pT1", 13.0);
   desc.add<double>("pT2", 30.0);
   desc.add<double>("pT3", 70.0);
@@ -907,8 +882,6 @@ void TSGForOIDNN::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
   desc.add<double>("SF4", 7.0);
   desc.add<double>("SF5", 10.0);
   desc.add<double>("SF6", 2.0);
-  desc.add<double>("tsosDiff1", 0.2);
-  desc.add<double>("tsosDiff2", 0.02);
   desc.add<std::string>("propagatorName", "PropagatorWithMaterialParabolicMf");
   desc.add<unsigned int>("maxHitlessSeedsIP", 5);
   desc.add<unsigned int>("maxHitlessSeedsMuS", 0);

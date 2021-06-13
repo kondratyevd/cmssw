@@ -64,16 +64,10 @@ class TSGForOIDNN : public edm::global::EDProducer<> {
     /// How many hits to try per layer
     const unsigned int numOfHitsToTry_;
 
-    ///L2 valid hit cuts to decide seed creation by both states
-    const unsigned int numL2ValidHitsCutAllEta_;
-    const unsigned int numL2ValidHitsCutAllEndcap_;
-
     /// Rescale L2 parameter uncertainties (fixed error vs pT, eta)
-    const double fixedErrorRescalingForHits_;
     const double fixedErrorRescalingForHitless_;
 
     /// Whether or not to use an automatically calculated scale-factor value
-    const bool adjustErrorsDynamicallyForHits_;
     const bool adjustErrorsDynamicallyForHitless_;
 
     /// Estimator used to find dets and TrajectoryMeasurements
@@ -85,10 +79,6 @@ class TSGForOIDNN : public edm::global::EDProducer<> {
     /// Maximum eta value to activate searching in the TOB
     const double maxEtaForTOB_;
 
-    /// Switch ON  (True) : use additional hits for seeds depending on the L2 properties (ignores numOfMaxSeeds_)
-    /// Switch OFF (False): the numOfMaxSeeds_ defines if we will use hitless (numOfMaxSeeds_==1) or hitless+hits (numOfMaxSeeds_>1)
-    const bool useHitLessSeeds_;
-
     /// KFUpdator defined in constructor
     const std::unique_ptr<TrajectoryStateUpdator> updator_;
 
@@ -99,10 +89,6 @@ class TSGForOIDNN : public edm::global::EDProducer<> {
     const double eta1_, eta2_, eta3_, eta4_, eta5_, eta6_, eta7_;
     const double SF1_, SF2_, SF3_, SF4_, SF5_, SF6_;
 
-    /// Distance of L2 TSOSs before and after updated with vertex
-    const double tsosDiff1_;
-    const double tsosDiff2_;
-
     /// Counters and flags for the implementation
     const std::string propagatorName_;
     const std::string theCategory_;
@@ -112,6 +98,7 @@ class TSGForOIDNN : public edm::global::EDProducer<> {
     const unsigned int maxHitlessSeedsIP_;
     const unsigned int maxHitlessSeedsMuS_;
     const unsigned int maxHitDoubletSeeds_;
+
     /// Get number of seeds to use from DNN output instead of "max..Seeds" parameters
     const bool getStrategyFromDNN_;
     const double etaSplitForDnn_;
@@ -142,23 +129,23 @@ class TSGForOIDNN : public edm::global::EDProducer<> {
                            const Propagator& propagatorAlong,
                            edm::ESHandle<Chi2MeasurementEstimatorBase>& estimator,
                            edm::Handle<MeasurementTrackerEvent>& measurementTracker,
-                           double errorSF,
                            unsigned int& hitSeedsMade,
                            unsigned int& numSeedsMade,
                            unsigned int& layerCount,
                            std::vector<TrajectorySeed>& out) const;
 
+    /// Similar to makeSeedsFromHits, but seed is created only if there are compatible hits on two adjacent layers
     void makeSeedsFromHitDoublets(const GeometricSearchDet& layer,
                                   const TrajectoryStateOnSurface& tsos,
                                   const Propagator& propagatorAlong,
                                   edm::ESHandle<Chi2MeasurementEstimatorBase>& estimator,
                                   edm::Handle<MeasurementTrackerEvent>& measurementTracker,
                                   edm::ESHandle<NavigationSchool> navSchool,
-                                  double errorSF,
                                   unsigned int& hitDoubletSeedsMade,
                                   unsigned int& numSeedsMade,
                                   unsigned int& layerCount,
                                   std::vector<TrajectorySeed>& out) const;
+
     /// Calculate the dynamic error SF by analysing the L2
     double calculateSFFromL2(const reco::TrackRef track) const;
 
