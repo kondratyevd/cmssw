@@ -49,6 +49,16 @@ class TSGForOIDNN : public edm::global::EDProducer<> {
     /// Labels for input collections
     const edm::EDGetTokenT<reco::TrackCollection> src_;
 
+    /// Tokens for ESHandle
+    const edm::ESGetToken<Chi2MeasurementEstimatorBase, TrackingComponentsRecord> t_estimatorH_;
+    const edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> t_magfieldH_;
+    const edm::ESGetToken<Propagator, TrackingComponentsRecord> t_propagatorAlongH_;
+    const edm::ESGetToken<Propagator, TrackingComponentsRecord> t_propagatorOppositeH_;
+    const edm::ESGetToken<TrackerGeometry, TrackerDigiGeometryRecord> t_tmpTkGeometryH_;
+    const edm::ESGetToken<GlobalTrackingGeometry, GlobalTrackingGeometryRecord> t_geometryH_;
+    const edm::ESGetToken<NavigationSchool, NavigationSchoolRecord> t_navSchool_;
+    const edm::ESGetToken<Propagator, TrackingComponentsRecord> t_SHPOpposite_;
+
     /// Maximum number of seeds for each L2
     const unsigned int maxSeeds_;
 

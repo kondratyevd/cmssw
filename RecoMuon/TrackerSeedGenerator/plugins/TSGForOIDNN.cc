@@ -13,6 +13,14 @@
 
 TSGForOIDNN::TSGForOIDNN(const edm::ParameterSet& iConfig)
     : src_(consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("src"))),
+      t_estimatorH_(esConsumes<Chi2MeasurementEstimatorBase, TrackingComponentsRecord>(edm::ESInputTag("", iConfig.getParameter<std::string>("estimator")))),
+      t_magfieldH_(esConsumes<MagneticField, IdealMagneticFieldRecord>()),
+      t_propagatorAlongH_(esConsumes<Propagator, TrackingComponentsRecord>(edm::ESInputTag("", iConfig.getParameter<std::string>("propagatorName")))),
+      t_propagatorOppositeH_(esConsumes<Propagator, TrackingComponentsRecord>(edm::ESInputTag("", iConfig.getParameter<std::string>("propagatorName")))),
+      t_tmpTkGeometryH_(esConsumes<TrackerGeometry, TrackerDigiGeometryRecord>()),
+      t_geometryH_(esConsumes<GlobalTrackingGeometry, GlobalTrackingGeometryRecord>()),
+      t_navSchool_(esConsumes<NavigationSchool, NavigationSchoolRecord>(edm::ESInputTag("", "SimpleNavigationSchool"))),
+      t_SHPOpposite_(esConsumes<Propagator, TrackingComponentsRecord>(edm::ESInputTag("", "hltESPSteppingHelixPropagatorOpposite"))),
       maxSeeds_(iConfig.getParameter<uint32_t>("maxSeeds")),
       maxHitSeeds_(iConfig.getParameter<uint32_t>("maxHitSeeds")),
       maxHitlessSeeds_(iConfig.getParameter<uint32_t>("maxHitlessSeeds")),
@@ -20,7 +28,6 @@ TSGForOIDNN::TSGForOIDNN(const edm::ParameterSet& iConfig)
       numOfHitsToTry_(iConfig.getParameter<int32_t>("hitsToTry")),
       fixedErrorRescalingForHitless_(iConfig.getParameter<double>("fixedErrorRescaleFactorForHitless")),
       adjustErrorsDynamicallyForHitless_(iConfig.getParameter<bool>("adjustErrorsDynamicallyForHitless")),
-      estimatorName_(iConfig.getParameter<std::string>("estimator")),
       minEtaForTEC_(iConfig.getParameter<double>("minEtaForTEC")),
       maxEtaForTOB_(iConfig.getParameter<double>("maxEtaForTOB")),
       updator_(new KFUpdator()),
@@ -42,7 +49,6 @@ TSGForOIDNN::TSGForOIDNN(const edm::ParameterSet& iConfig)
       SF4_(iConfig.getParameter<double>("SF4")),
       SF5_(iConfig.getParameter<double>("SF5")),
       SF6_(iConfig.getParameter<double>("SF6")),
-      propagatorName_(iConfig.getParameter<std::string>("propagatorName")),
       theCategory_(std::string("Muon|RecoMuon|TSGForOIDNN")),
       maxHitlessSeedsIP_(iConfig.getParameter<uint32_t>("maxHitlessSeedsIP")),
       maxHitlessSeedsMuS_(iConfig.getParameter<uint32_t>("maxHitlessSeedsMuS")),
@@ -81,7 +87,7 @@ TSGForOIDNN::~TSGForOIDNN() {
 //
 // Produce seeds
 //
-void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
+void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, edm::EventSetup const& iEventSetup) const {
     // Initialize variables
     unsigned int numSeedsMade = 0;
     unsigned int layerCount = 0;
@@ -94,23 +100,16 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
     Plane::PlanePointer dummyPlane = Plane::build(Plane::PositionType(), Plane::RotationType());
 
     // Read ESHandles
-    edm::Handle<MeasurementTrackerEvent> measurementTrackerH;
-    edm::ESHandle<Chi2MeasurementEstimatorBase> estimatorH;
-    edm::ESHandle<MagneticField> magfieldH;
-    edm::ESHandle<Propagator> propagatorAlongH;
-    edm::ESHandle<Propagator> propagatorOppositeH;
-    edm::ESHandle<TrackerGeometry> tmpTkGeometryH;
-    edm::ESHandle<GlobalTrackingGeometry> geometryH;
-    edm::ESHandle<NavigationSchool> navSchool;
+    edm::ESHandle<Chi2MeasurementEstimatorBase> estimatorH = iEventSetup.getHandle(t_estimatorH_);
+    edm::ESHandle<MagneticField> magfieldH = iEventSetup.getHandle(t_magfieldH_);
+    edm::ESHandle<Propagator> propagatorAlongH = iEventSetup.getHandle(t_propagatorAlongH_);
+    edm::ESHandle<Propagator> propagatorOppositeH = iEventSetup.getHandle(t_propagatorOppositeH_);
+    edm::ESHandle<TrackerGeometry> tmpTkGeometryH = iEventSetup.getHandle(t_tmpTkGeometryH_);
+    edm::ESHandle<GlobalTrackingGeometry> geometryH = iEventSetup.getHandle(t_geometryH_);
+    edm::ESHandle<NavigationSchool> navSchool = iEventSetup.getHandle(t_navSchool_);
 
-    iSetup.get<IdealMagneticFieldRecord>().get(magfieldH);
-    iSetup.get<TrackingComponentsRecord>().get(propagatorName_, propagatorOppositeH);
-    iSetup.get<TrackingComponentsRecord>().get(propagatorName_, propagatorAlongH);
-    iSetup.get<GlobalTrackingGeometryRecord>().get(geometryH);
-    iSetup.get<TrackerDigiGeometryRecord>().get(tmpTkGeometryH);
-    iSetup.get<TrackingComponentsRecord>().get(estimatorName_, estimatorH);
+    edm::Handle<MeasurementTrackerEvent> measurementTrackerH;
     iEvent.getByToken(measurementTrackerTag_, measurementTrackerH);
-    iSetup.get<NavigationSchoolRecord>().get("SimpleNavigationSchool", navSchool);
 
     // Read L2 track collection
     edm::Handle<reco::TrackCollection> l2TrackCol;
@@ -135,8 +134,7 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, const edm::Even
     std::unique_ptr<Propagator> propagatorOpposite = SetPropagationDirection(*propagatorOppositeH, oppositeToMomentum);
 
     // Stepping Helix Propagator for propogation from muon system to tracker
-    edm::ESHandle<Propagator> SHPOpposite;
-    iSetup.get<TrackingComponentsRecord>().get("hltESPSteppingHelixPropagatorOpposite", SHPOpposite);
+    edm::ESHandle<Propagator> SHPOpposite = iEventSetup.getHandle(t_SHPOpposite_);
 
     // Loop over the L2's and make seeds for all of them
     LogTrace(theCategory_) << "TSGForOIDNN::produce: Number of L2's: " << l2TrackCol->size();
