@@ -77,9 +77,6 @@ class TSGForOIDNN : public edm::global::EDProducer<> {
     /// Rescale L2 parameter uncertainties (fixed error vs pT, eta)
     const double fixedErrorRescalingForHitless_;
 
-    /// Whether or not to use an automatically calculated scale-factor value
-    const bool adjustErrorsDynamicallyForHitless_;
-
     /// Estimator used to find dets and TrajectoryMeasurements
     const std::string estimatorName_;
 
@@ -93,11 +90,6 @@ class TSGForOIDNN : public edm::global::EDProducer<> {
     const std::unique_ptr<TrajectoryStateUpdator> updator_;
 
     const edm::EDGetTokenT<MeasurementTrackerEvent> measurementTrackerTag_;
-
-    /// pT, eta ranges and scale factor values
-    const double pT1_, pT2_, pT3_;
-    const double eta1_, eta2_, eta3_, eta4_, eta5_, eta6_, eta7_;
-    const double SF1_, SF2_, SF3_, SF4_, SF5_, SF6_;
 
     /// Counters and flags for the implementation
     const std::string propagatorName_;
@@ -162,12 +154,12 @@ class TSGForOIDNN : public edm::global::EDProducer<> {
     /// Dictionary of inputs for DNN
     std::map<std::string, float> getFeatureMap(
         reco::TrackRef l2,
-        const TrajectoryStateOnSurface& tsos_IP,     
+        const TrajectoryStateOnSurface& tsos_IP,
         const TrajectoryStateOnSurface& tsos_MuS
     ) const;
 
     /// Evaluate DNN
-    std::tuple<int, int, int, bool>  evaluateDnn(
+    std::tuple<int, int, int, float, bool>  evaluateDnn(
         std::map<std::string, float> feature_map,
         tensorflow::Session* session,
         const pt::ptree& metadata

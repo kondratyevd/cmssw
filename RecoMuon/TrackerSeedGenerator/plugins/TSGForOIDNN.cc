@@ -27,28 +27,10 @@ TSGForOIDNN::TSGForOIDNN(const edm::ParameterSet& iConfig)
       numOfLayersToTry_(iConfig.getParameter<int32_t>("layersToTry")),
       numOfHitsToTry_(iConfig.getParameter<int32_t>("hitsToTry")),
       fixedErrorRescalingForHitless_(iConfig.getParameter<double>("fixedErrorRescaleFactorForHitless")),
-      adjustErrorsDynamicallyForHitless_(iConfig.getParameter<bool>("adjustErrorsDynamicallyForHitless")),
       minEtaForTEC_(iConfig.getParameter<double>("minEtaForTEC")),
       maxEtaForTOB_(iConfig.getParameter<double>("maxEtaForTOB")),
       updator_(new KFUpdator()),
-      measurementTrackerTag_(
-          consumes<MeasurementTrackerEvent>(iConfig.getParameter<edm::InputTag>("MeasurementTrackerEvent"))),
-      pT1_(iConfig.getParameter<double>("pT1")),
-      pT2_(iConfig.getParameter<double>("pT2")),
-      pT3_(iConfig.getParameter<double>("pT3")),
-      eta1_(iConfig.getParameter<double>("eta1")),
-      eta2_(iConfig.getParameter<double>("eta2")),
-      eta3_(iConfig.getParameter<double>("eta3")),
-      eta4_(iConfig.getParameter<double>("eta4")),
-      eta5_(iConfig.getParameter<double>("eta5")),
-      eta6_(iConfig.getParameter<double>("eta6")),
-      eta7_(iConfig.getParameter<double>("eta7")),
-      SF1_(iConfig.getParameter<double>("SF1")),
-      SF2_(iConfig.getParameter<double>("SF2")),
-      SF3_(iConfig.getParameter<double>("SF3")),
-      SF4_(iConfig.getParameter<double>("SF4")),
-      SF5_(iConfig.getParameter<double>("SF5")),
-      SF6_(iConfig.getParameter<double>("SF6")),
+      measurementTrackerTag_(consumes<MeasurementTrackerEvent>(iConfig.getParameter<edm::InputTag>("MeasurementTrackerEvent"))),
       theCategory_(std::string("Muon|RecoMuon|TSGForOIDNN")),
       maxHitlessSeedsIP_(iConfig.getParameter<uint32_t>("maxHitlessSeedsIP")),
       maxHitlessSeedsMuS_(iConfig.getParameter<uint32_t>("maxHitlessSeedsMuS")),
@@ -179,9 +161,13 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, edm::EventSetup
         unsigned int maxHitlessSeedsIP__ = maxHitlessSeedsIP_;
         unsigned int maxHitlessSeedsMuS__ = maxHitlessSeedsMuS_; 
 
+	float errorSFHitless = fixedErrorRescalingForHitless_;
+
         // update strategy parameters by evaluating DNN
         if (getStrategyFromDNN_){
             int nHBd(0), nHLIP(0), nHLMuS(0);
+	    float SF = 1.0;
+
             bool dnnSuccess_ = false;
 
             // Put variables needed for DNN into an std::map
@@ -189,10 +175,10 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, edm::EventSetup
 
             if (std::abs(l2->eta())<etaSplitForDnn_){
                 // barrel
-                std::tie(nHBd, nHLIP, nHLMuS, dnnSuccess_) =  evaluateDnn(feature_map_, tf_session_barrel_, metadata.get_child("barrel") );
+                std::tie(nHBd, nHLIP, nHLMuS, SF, dnnSuccess_) =  evaluateDnn(feature_map_, tf_session_barrel_, metadata.get_child("barrel") );
             } else {
                 // endcap
-                std::tie(nHBd, nHLIP, nHLMuS, dnnSuccess_) =  evaluateDnn(feature_map_, tf_session_endcap_, metadata.get_child("endcap") );
+                std::tie(nHBd, nHLIP, nHLMuS, SF, dnnSuccess_) =  evaluateDnn(feature_map_, tf_session_endcap_, metadata.get_child("endcap") );
             }
             if (!dnnSuccess_) break;
 
@@ -200,6 +186,7 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, edm::EventSetup
             maxHitDoubletSeeds__ = nHBd;
             maxHitlessSeedsIP__ = nHLIP;
             maxHitlessSeedsMuS__ = nHLMuS;
+	    errorSFHitless = SF;
         }
 
         numSeedsMade = 0;
@@ -207,10 +194,6 @@ void TSGForOIDNN::produce(edm::StreamID sid, edm::Event& iEvent, edm::EventSetup
         hitlessSeedsMadeMuS = 0;
         hitSeedsMade = 0;
         hitDoubletSeedsMade = 0;
-
-        // calculate scale factors
-        double errorSFHitless =
-            (adjustErrorsDynamicallyForHitless_ ? calculateSFFromL2(l2) : fixedErrorRescalingForHitless_);
 
         // BARREL
         if (absL2muonEta < maxEtaForTOB_) {
@@ -676,53 +659,6 @@ void TSGForOIDNN::makeSeedsFromHitDoublets(const GeometricSearchDet& layer,
 }
 
 
-//
-// Calculate the dynamic error SF by analysing the L2
-//
-double TSGForOIDNN::calculateSFFromL2(const reco::TrackRef track) const {
-    double theSF = 1.0;
-    // L2 direction vs pT blowup - as was previously done:
-    // Split into 4 pT ranges: <pT1_, pT1_<pT2_, pT2_<pT3_, <pT4_: 13,30,70
-    // Split into different eta ranges depending in pT
-    double abseta = std::abs(track->eta());
-    if (track->pt() <= pT1_)
-        theSF = SF1_;
-    else if (track->pt() > pT1_ && track->pt() <= pT2_) {
-        if (abseta <= eta3_)
-            theSF = SF3_;
-        else if (abseta > eta3_ && abseta <= eta6_)
-            theSF = SF2_;
-        else if (abseta > eta6_)
-            theSF = SF3_;
-    } else if (track->pt() > pT2_ && track->pt() <= pT3_) {
-        if (abseta <= eta1_)
-            theSF = SF6_;
-        else if (abseta > eta1_ && abseta <= eta2_)
-            theSF = SF4_;
-        else if (abseta > eta2_ && abseta <= eta3_)
-            theSF = SF6_;
-        else if (abseta > eta3_ && abseta <= eta4_)
-            theSF = SF1_;
-        else if (abseta > eta4_ && abseta <= eta5_)
-            theSF = SF1_;
-        else if (abseta > eta5_)
-            theSF = SF5_;
-    } else if (track->pt() > pT3_) {
-        if (abseta <= eta3_)
-            theSF = SF5_;
-        else if (abseta > eta3_ && abseta <= eta4_)
-            theSF = SF4_;
-        else if (abseta > eta4_ && abseta <= eta5_)
-            theSF = SF4_;
-        else if (abseta > eta5_)
-            theSF = SF5_;
-    }
-
-    LogTrace(theCategory_) << "TSGForOIDNN::calculateSFFromL2: SF has been calculated as: " << theSF;
-
-    return theSF;
-}
-
 std::map<std::string, float> TSGForOIDNN::getFeatureMap(
     reco::TrackRef l2,
     const TrajectoryStateOnSurface& tsos_IP,
@@ -789,12 +725,13 @@ std::map<std::string, float> TSGForOIDNN::getFeatureMap(
 }
 
 
-std::tuple<int, int, int, bool> TSGForOIDNN::evaluateDnn(
+std::tuple<int, int, int, float,  bool> TSGForOIDNN::evaluateDnn(
     std::map<std::string, float> feature_map,
     tensorflow::Session* session,
     const pt::ptree& metadata
 ) const {
     int nHB, nHLIP,nHLMuS, n_features = 0;
+    float SF = 1.0;
     bool dnnSuccess = false;
     n_features = metadata.get<int>("n_features", 0);
 
@@ -806,7 +743,7 @@ std::tuple<int, int, int, bool> TSGForOIDNN::evaluateDnn(
         fname =  feature.second.data();
         if (feature_map.find(fname) == feature_map.end()) {
             std::cout << "Couldn't find " << fname << " in feature_map! Will not evaluate DNN." << std::endl;
-            return std::make_tuple(nHB, nHLIP, nHLMuS, dnnSuccess);
+            return std::make_tuple(nHB, nHLIP, nHLMuS, SF, dnnSuccess);
         }
         else {
             input.matrix<float>()(0, i_feature) = float(feature_map.at(fname));
@@ -837,12 +774,13 @@ std::tuple<int, int, int, bool> TSGForOIDNN::evaluateDnn(
     }
 
     // Decode output
-    nHB = metadata.get<int>("output_labels.label_"+std::to_string(imax+1)+".nHB");
-    nHLIP = metadata.get<int>("output_labels.label_"+std::to_string(imax+1)+".nHLIP");
-    nHLMuS = metadata.get<int>("output_labels.label_"+std::to_string(imax+1)+".nHLMuS");
+    nHBd = metadata.get<int>("output_labels.label_"+std::to_string(imax)+".nHBd");
+    nHLIP = metadata.get<int>("output_labels.label_"+std::to_string(imax)+".nHLIP");
+    nHLMuS = metadata.get<int>("output_labels.label_"+std::to_string(imax)+".nHLMuS");
+    SF = metadata.get<float>("output_labels.label_"+std::to_string(imax)+".SF");
 
     dnnSuccess = true;
-    return std::make_tuple(nHB, nHLIP, nHLMuS, dnnSuccess);
+    return std::make_tuple(nHB, nHLIP, nHLMuS, SF, dnnSuccess);
 }
 
 
@@ -855,7 +793,6 @@ void TSGForOIDNN::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
   desc.add<int>("layersToTry", 2);
   desc.add<double>("fixedErrorRescaleFactorForHitless", 2.0);
   desc.add<int>("hitsToTry", 1);
-  desc.add<bool>("adjustErrorsDynamicallyForHitless", true);
   desc.add<edm::InputTag>("MeasurementTrackerEvent", edm::InputTag("hltSiStripClusters"));
   desc.add<std::string>("estimator", "hltESPChi2MeasurementEstimator100");
   desc.add<double>("maxEtaForTOB", 1.8);
@@ -864,22 +801,6 @@ void TSGForOIDNN::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
   desc.add<unsigned int>("maxSeeds", 20);
   desc.add<unsigned int>("maxHitlessSeeds", 5);  
   desc.add<unsigned int>("maxHitSeeds", 1);
-  desc.add<double>("pT1", 13.0);
-  desc.add<double>("pT2", 30.0);
-  desc.add<double>("pT3", 70.0);
-  desc.add<double>("eta1", 0.2);
-  desc.add<double>("eta2", 0.3);
-  desc.add<double>("eta3", 1.0);
-  desc.add<double>("eta4", 1.2);
-  desc.add<double>("eta5", 1.6);
-  desc.add<double>("eta6", 1.4);
-  desc.add<double>("eta7", 2.1);
-  desc.add<double>("SF1", 3.0);
-  desc.add<double>("SF2", 4.0);
-  desc.add<double>("SF3", 5.0);
-  desc.add<double>("SF4", 7.0);
-  desc.add<double>("SF5", 10.0);
-  desc.add<double>("SF6", 2.0);
   desc.add<std::string>("propagatorName", "PropagatorWithMaterialParabolicMf");
   desc.add<unsigned int>("maxHitlessSeedsIP", 5);
   desc.add<unsigned int>("maxHitlessSeedsMuS", 0);
