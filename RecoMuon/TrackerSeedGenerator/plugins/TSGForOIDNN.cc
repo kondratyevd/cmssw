@@ -730,7 +730,7 @@ std::tuple<int, int, int, float,  bool> TSGForOIDNN::evaluateDnn(
     tensorflow::Session* session,
     const pt::ptree& metadata
 ) const {
-    int nHB, nHLIP,nHLMuS, n_features = 0;
+    int nHBd, nHLIP,nHLMuS, n_features = 0;
     float SF = 1.0;
     bool dnnSuccess = false;
     n_features = metadata.get<int>("n_features", 0);
@@ -742,8 +742,8 @@ std::tuple<int, int, int, float,  bool> TSGForOIDNN::evaluateDnn(
     for (const pt::ptree::value_type &feature : metadata.get_child("feature_names")){
         fname =  feature.second.data();
         if (feature_map.find(fname) == feature_map.end()) {
-            std::cout << "Couldn't find " << fname << " in feature_map! Will not evaluate DNN." << std::endl;
-            return std::make_tuple(nHB, nHLIP, nHLMuS, SF, dnnSuccess);
+	    // don't evaluate DNN if any input feature is missing
+            return std::make_tuple(nHBd, nHLIP, nHLMuS, SF, dnnSuccess);
         }
         else {
             input.matrix<float>()(0, i_feature) = float(feature_map.at(fname));
@@ -780,7 +780,7 @@ std::tuple<int, int, int, float,  bool> TSGForOIDNN::evaluateDnn(
     SF = metadata.get<float>("output_labels.label_"+std::to_string(imax)+".SF");
 
     dnnSuccess = true;
-    return std::make_tuple(nHB, nHLIP, nHLMuS, SF, dnnSuccess);
+    return std::make_tuple(nHBd, nHLIP, nHLMuS, SF, dnnSuccess);
 }
 
 
